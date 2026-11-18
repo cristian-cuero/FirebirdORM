@@ -1,0 +1,86 @@
+
+services:
+  firebird-2.5:
+    image: jacobalberty/firebird:v2.5.9-sc
+    container_name: firebird-orm-fb25
+    environment:
+      ISC_PASSWORD: masterkey
+      FIREBIRD_DATABASE: employee.fdb
+    ports:
+      - "3053:3050"
+    volumes:
+      - fb25-data:/firebird
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "echo 'select 1 from rdb$$database;' | /usr/local/firebird/bin/isql -q -user SYSDBA -password masterkey localhost:/firebird/data/employee.fdb"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  firebird-3:
+    image: firebirdsql/firebird:3.0.14
+    container_name: firebird-orm-fb3
+    environment:
+      FIREBIRD_ROOT_PASSWORD: masterkey
+      FIREBIRD_DATABASE: employee.fdb
+      FIREBIRD_DATABASE_DEFAULT_CHARSET: UTF8
+    ports:
+      - "3050:3050"
+    volumes:
+      - fb3-data:/var/lib/firebird/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "printf 'SELECT 1 FROM RDB$$DATABASE;\\n' | isql -q -user SYSDBA -password masterkey localhost:/var/lib/firebird/data/employee.fdb"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  firebird-4:
+    image: firebirdsql/firebird:4.0.7
+    container_name: firebird-orm-fb4
+    environment:
+      FIREBIRD_ROOT_PASSWORD: masterkey
+      FIREBIRD_DATABASE: employee.fdb
+      FIREBIRD_DATABASE_DEFAULT_CHARSET: UTF8
+    ports:
+      - "3054:3050"
+    volumes:
+      - fb4-data:/var/lib/firebird/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "printf 'SELECT 1 FROM RDB$$DATABASE;\\n' | isql -q -user SYSDBA -password masterkey localhost:/var/lib/firebird/data/employee.fdb"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  firebird-5:
+    image: firebirdsql/firebird:5.0.4
+    container_name: firebird-orm-fb5
+    environment:
+      FIREBIRD_ROOT_PASSWORD: masterkey
+      FIREBIRD_DATABASE: employee.fdb
+      FIREBIRD_DATABASE_DEFAULT_CHARSET: UTF8
+    ports:
+      - "3052:3050"
+    volumes:
+      - fb5-data:/var/lib/firebird/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "printf 'SELECT 1 FROM RDB$$DATABASE;\\n' | isql -q -user SYSDBA -password masterkey localhost:/var/lib/firebird/data/employee.fdb"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  fb25-data:
+  fb3-data:
+  fb4-data:
+  fb5-data:

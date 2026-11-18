@@ -1,0 +1,94 @@
+{
+  "name": "firebird-orm",
+  "version": "0.0.1-dev",
+  "description": "Firebird ORM for Node.js - Sequelize-inspired API with native Firebird support",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "build:esm": "node scripts/build.js --esm",
+    "build:cjs": "node scripts/build.js --cjs",
+    "build:types": "node scripts/build.js --types",
+    "dev": "node --watch --experimental-strip-types src/index.js",
+    "test": "jest --coverage",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/ tests/ --ext .js",
+    "lint:fix": "eslint src/ tests/ --ext .js --fix",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md}\"",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "release:dry": "npm publish --dry-run --access public",
+    "release": "npm version patch && npm publish --access public"
+  },
+  "keywords": [
+    "firebird",
+    "orm",
+    "sequelize",
+    "database",
+    "sql",
+    "node-firebird",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/firebird-orm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/firebird-orm/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/firebird-orm#readme",
+  "dependencies": {
+    "node-firebird": "^2.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jest": "^28.0.0",
+    "globals": "^15.0.0"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "bracketSpacing": true,
+    "arrowParens": "avoid"
+  }
+}
