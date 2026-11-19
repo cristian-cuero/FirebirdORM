@@ -46,7 +46,8 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
         });
       } else {
         // Es una conexión reservada (db), usar directamente
-        connection.query(sql, params, (err, result) => {
+        const executor = connection.__nativeTransaction || connection;
+        executor.query(sql, params, (err, result) => {
           // NO hacemos detach aquí, la transacción gestiona la conexión
           if (err) return reject(err);
           resolve(result);

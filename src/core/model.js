@@ -75,18 +75,18 @@ export class Model {
   /**
    * Inserta un nuevo registro
    */
-  static async create(values) {
+  static async create(values, options = {}) {
     try {
-      await this.triggerHook('beforeCreate', values);
+      await this.triggerHook('beforeCreate', values, options);
 
       const instance = new this(values);
       // Validar antes de insertar
       instance.validate();
 
       const { sql, params } = this.sequelize.dialect.queryGenerator.insertQuery(this, values);
-      await this.sequelize.query(sql, params);
+      await this.sequelize.query(sql, params, { transaction: options.transaction });
 
-      await this.triggerHook('afterCreate', instance);
+      await this.triggerHook('afterCreate', instance, options);
       return instance;
     } catch (error) {
       if (error instanceof ValidationError) throw error;
@@ -171,6 +171,36 @@ export class Model {
       return parseInt(countValue, 10);
     } catch (error) {
       throw new DatabaseError(`Error al contar ${this.tableName}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Guarda una instancia (INSERT o UPDATE según si tiene PK)
+   */
+  async save(options = {}) {
+    try {
+      await this.constructor.triggerHook('beforeSave', this, options);
+
+      // Validar
+      this.validate();
+
+      const primaryKey = this.constructor.primaryKeyAttribute;
+      const pkValue = this[primaryKey];
+
+      if (pkValue !== undefined && pkValue !== null) {
+        // UPDATE
+        const { sql, params } = this.sequelize.dialect.queryGenerator.updateQuery(this.constructor, this.dataValues, { where: { [primaryKey]: pkValue } });
+        await this.sequelize.query(sql, params, options);
+      } else {
+        // INSERT
+        const { sql, params } = this.sequelize.dialect.queryGenerator.insertQuery(this.constructor, this.dataValues);
+        await this.sequelize.query(sql, params, options);
+      }
+
+      await this.constructor.triggerHook('afterSave', this, options);
+      return this;
+    } catch (error) {
+      throw new DatabaseError(`Error al guardar: ${error.message}`);
     }
   }
 
