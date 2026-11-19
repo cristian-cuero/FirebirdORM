@@ -34,12 +34,23 @@ export class Sequelize {
   }
 
   /**
-   * Ejecuta una consulta SQL nativa
+   * Ejecuta una consulta SQL nativa (Legacy/Alias)
    * @param {string} sql
    * @param {Array<any>} params
+   * @param {object} [options]
    */
-  async query(sql, params = []) {
-    return this.connectionManager.execute(sql, params);
+  async query(sql, params = [], options = {}) {
+    return this.connectionManager.execute(sql, params, options);
+  }
+
+  /**
+   * Ejecuta una consulta SQL nativa y segura (API recomendada)
+   * @param {string} sql - La consulta SQL con placeholders '?'
+   * @param {object} [options] - Opciones (replacements, transaction, etc.)
+   */
+  async queryRaw(sql, options = {}) {
+    const { replacements = [], ...otherOptions } = options;
+    return this.connectionManager.execute(sql, replacements, otherOptions);
   }
 
   /**

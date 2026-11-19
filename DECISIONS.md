@@ -1,37 +1,37 @@
-# DECISIONS - firebird-orm
+﻿# DECISIONS - firebird-orm
 
-Registro de decisiones técnicas importantes que afectan la arquitectura.
+Registro de decisiones tÃ©cnicas importantes que afectan la arquitectura.
 
 ---
 
 ## 1. Driver de Base de Datos
 
 **Fecha:** 2026-11-13  
-**Decisión:** Usar `node-firebird` (hgourvest) como driver principal  
+**DecisiÃ³n:** Usar `node-firebird` (hgourvest) como driver principal  
 **Alternativas evaluadas:**
 
-- `node-firebird-driver` - Solo interfaces TypeScript, no implementación completa
-- `node-firebird-driver-native` - Binding nativo, requiere compilación C++, fbclient.dll
+- `node-firebird-driver` - Solo interfaces TypeScript, no implementaciÃ³n completa
+- `node-firebird-driver-native` - Binding nativo, requiere compilaciÃ³n C++, fbclient.dll
 
-**Justificación:**
+**JustificaciÃ³n:**
 
-- Zero native dependencies → instalación trivial en cualquier OS/CI
+- Zero native dependencies â†’ instalaciÃ³n trivial en cualquier OS/CI
 - Pool de conexiones nativo, Promises/async-await, transacciones
 - Compatible Firebird 2.5, 3.0, 4.0, 5.0 via wire protocol
 - Mantenimiento activo (~100k descargas/semana)
-- **Validado en producción** por el usuario
+- **Validado en producciÃ³n** por el usuario
 
-**Arquitectura: Patrón Adapter para Drivers**  
+**Arquitectura: PatrÃ³n Adapter para Drivers**  
 El core del ORM **NO depende directamente de `node-firebird`**. Se define una interfaz `IDriverAdapter` en `src/core/driver-adapter.ts` que abstrae:
 
-- `connect(config)` → `Connection`
-- `createPool(config)` → `Pool`
-- `execute(connection, sql, params)` → `Result`
-- `startTransaction(connection)` → `Transaction`
+- `connect(config)` â†’ `Connection`
+- `createPool(config)` â†’ `Pool`
+- `execute(connection, sql, params)` â†’ `Result`
+- `startTransaction(connection)` â†’ `Transaction`
 - `commit/rollback(transaction)`
 - `close(connection/pool)`
 
-Implementación inicial: `NodeFirebirdAdapter` en `src/adapters/node-firebird/`.
+ImplementaciÃ³n inicial: `NodeFirebirdAdapter` en `src/adapters/node-firebird/`.
 Futuro: `NativeDriverAdapter` para `node-firebird-driver-native` sin tocar el core.
 
 ---
@@ -39,9 +39,9 @@ Futuro: `NativeDriverAdapter` para `node-firebird-driver-native` sin tocar el co
 ## 2. Versiones Soportadas (v1.0.0)
 
 **Fecha:** 2026-11-13  
-**Decisión:**
+**DecisiÃ³n:**
 
-- Node.js: **≥ 18 LTS** (Hydrogen, Iron, Jod)
+- Node.js: **â‰¥ 18 LTS** (Hydrogen, Iron, Jod)
 - Firebird: **3.0+** (4.0, 5.0 full support); 2.5 best-effort
 
 **Rationale:**
@@ -50,19 +50,19 @@ Futuro: `NativeDriverAdapter` para `node-firebird-driver-native` sin tocar el co
 - Firebird 3.0+: BOOLEAN, RETURNING, sintaxis moderna
 - FB 2.5: Solo si no requiere features modernas (generators+triggers para PK)
 
-**Estrategia de compatibilidad:** Detección automática de versión al conectar → adapta dialecto SQL
+**Estrategia de compatibilidad:** DetecciÃ³n automÃ¡tica de versiÃ³n al conectar â†’ adapta dialecto SQL
 
 ---
 
-## 3. API Pública - Estilo de Definición de Modelos
+## 3. API PÃºblica - Estilo de DefiniciÃ³n de Modelos
 
 **Fecha:** 2026-11-13  
-**Decisión:** **JavaScript nativo first** (ESM + CommonJS dual) — TypeScript se añade en fase posterior
+**DecisiÃ³n:** **JavaScript nativo first** (ESM + CommonJS dual) â€” TypeScript se aÃ±ade en fase posterior
 
-**API JavaScript (única por ahora):**
+**API JavaScript (Ãºnica por ahora):**
 
 ```javascript
-// Factory function (estilo Sequelize clásico)
+// Factory function (estilo Sequelize clÃ¡sico)
 const User = sequelize.define(
   'User',
   {
@@ -77,21 +77,21 @@ const users = await User.findAll({ where: { username: 'juan' } });
 const newUser = await User.create({ username: 'ana' });
 ```
 
-**Por qué:**
+**Por quÃ©:**
 
 - Usuario prefiere JS nativo para arrancar
 - JSDoc + `.d.ts` generados luego para soporte TS opcional
-- Menos tooling inicial, iteración más rápida
-- API idéntica a la que tendría con clases TS, solo sin decoradores
+- Menos tooling inicial, iteraciÃ³n mÃ¡s rÃ¡pida
+- API idÃ©ntica a la que tendrÃ­a con clases TS, solo sin decoradores
 
 ---
 
 ## 4. Estrategia de Claves Primarias (Auto-incremento)
 
 **Fecha:** 2026-11-13  
-**Decisión:** **Detección automática por versión de Firebird**
+**DecisiÃ³n:** **DetecciÃ³n automÃ¡tica por versiÃ³n de Firebird**
 
-- FB 4.0+: `IDENTITY` column (nativo, estándar SQL)
+- FB 4.0+: `IDENTITY` column (nativo, estÃ¡ndar SQL)
 - FB 2.5/3.0: `GENERATOR` + `BEFORE INSERT TRIGGER` (tradicional)
 
 **API unificada:**
@@ -102,14 +102,14 @@ const newUser = await User.create({ username: 'ana' });
 @Column({ type: DataTypes.INTEGER, autoIncrement: true, generatorName: 'GEN_MY_ID' })
 ```
 
-**Ventaja:** Desarrollador no preocupa por versión FB; ORM genera DDL correcto en `sync()` y migraciones.
+**Ventaja:** Desarrollador no preocupa por versiÃ³n FB; ORM genera DDL correcto en `sync()` y migraciones.
 
 ---
 
 ## 5. RETURNING Clause
 
 **Fecha:** 2026-11-13  
-**Decisión:** Soporte nativo en FB 3.0+ para INSERT/UPDATE/DELETE
+**DecisiÃ³n:** Soporte nativo en FB 3.0+ para INSERT/UPDATE/DELETE
 
 ```typescript
 // create con retorno de campos generados
@@ -126,7 +126,7 @@ const users = await User.bulkCreate(data, { returning: true });
 ## 6. Transacciones
 
 **Fecha:** 2026-11-13  
-**Decisión:** Dos APIs complementarias
+**DecisiÃ³n:** Dos APIs complementarias
 
 **Managed (recomendada):**
 
@@ -148,10 +148,10 @@ try { await ...; await t.commit(); } catch { await t.rollback(); throw e; }
 
 ---
 
-## 7. Paginación
+## 7. PaginaciÃ³n
 
 **Fecha:** 2026-11-13  
-**Decisión:** API unificada `limit`/`offset` → SQL adaptado por versión
+**DecisiÃ³n:** API unificada `limit`/`offset` â†’ SQL adaptado por versiÃ³n
 
 | Firebird  | SQL Generado                    |
 | --------- | ------------------------------- |
@@ -162,13 +162,13 @@ try { await ...; await t.commit(); } catch { await t.rollback(); throw e; }
 
 ---
 
-## 8. Mapeo de Tipos de Datos (Firebird ↔ DataTypes ↔ JS)
+## 8. Mapeo de Tipos de Datos (Firebird â†” DataTypes â†” JS)
 
 | Firebird     | DataTypes    | JS Type           | Notas                          |
 | ------------ | ------------ | ----------------- | ------------------------------ |
 | INTEGER      | INTEGER      | number            | 32-bit                         |
 | BIGINT       | BIGINT       | bigint \| number  | 64-bit                         |
-| NUMERIC(p,s) | DECIMAL(p,s) | **string**        | Precisión exacta → string      |
+| NUMERIC(p,s) | DECIMAL(p,s) | **string**        | PrecisiÃ³n exacta â†’ string      |
 | VARCHAR(n)   | STRING(n)    | string            |                                |
 | BLOB TEXT    | TEXT         | string            |                                |
 | BLOB BINARY  | BLOB         | Buffer            |                                |
@@ -177,43 +177,43 @@ try { await ...; await t.commit(); } catch { await t.rollback(); throw e; }
 | BOOLEAN      | BOOLEAN      | boolean           | FB 3.0+ (FB 2.5: SMALLINT 0/1) |
 | UUID         | UUID         | string            | FB 4.0+ nativo                 |
 
-**Decisión clave:** `DECIMAL/NUMERIC` → **string** en JS para evitar pérdida de precisión.
+**DecisiÃ³n clave:** `DECIMAL/NUMERIC` â†’ **string** en JS para evitar pÃ©rdida de precisiÃ³n.
 
 ---
 
 ## 9. Estructura Modular del Proyecto
 
 **Fecha:** 2026-11-13  
-**Decisión:** Arquitectura por capas en `src/`
+**DecisiÃ³n:** Arquitectura por capas en `src/`
 
 ```
 src/
-├── core/           # Sequelize, ConnectionManager, Dialect, VersionDetector
-├── models/         # Model, DataTypes, Decorators, Hooks, Validations, Associations
-├── query/          # QueryBuilder, QueryGenerator, Operators, Functions
-├── transactions/   # Transaction, CLS (opcional)
-├── migrations/     # Migrator, Migration, CLI, Storage
-├── utils/          # Logger, Helpers, SqlEscape
-└── types/          # Tipos TypeScript públicos
+â”œâ”€â”€ core/           # Sequelize, ConnectionManager, Dialect, VersionDetector
+â”œâ”€â”€ models/         # Model, DataTypes, Decorators, Hooks, Validations, Associations
+â”œâ”€â”€ query/          # QueryBuilder, QueryGenerator, Operators, Functions
+â”œâ”€â”€ transactions/   # Transaction, CLS (opcional)
+â”œâ”€â”€ migrations/     # Migrator, Migration, CLI, Storage
+â”œâ”€â”€ utils/          # Logger, Helpers, SqlEscape
+â””â”€â”€ types/          # Tipos TypeScript pÃºblicos
 ```
 
-**Principio:** Separación de responsabilidades, cada módulo testeable independientemente.
+**Principio:** SeparaciÃ³n de responsabilidades, cada mÃ³dulo testeable independientemente.
 
 ---
 
-## 10. Protección contra SQL Injection
+## 10. ProtecciÃ³n contra SQL Injection
 
 **Fecha:** 2026-11-13  
-**Decisión:** **Parametrización obligatoria** en todas las APIs
+**DecisiÃ³n:** **ParametrizaciÃ³n obligatoria** en todas las APIs
 
 ```typescript
-// QueryBuilder - SIEMPRE parámetros
+// QueryBuilder - SIEMPRE parÃ¡metros
 User.findAll({ where: { username: input } }); // WHERE username = ?
 
 // Raw queries - SOLO con bind/replacements
 sequelize.query('SELECT * FROM users WHERE username = $1', { bind: [input] });
 
-// Identificadores dinámicos - escapeIdentifier
+// Identificadores dinÃ¡micos - escapeIdentifier
 sequelize.query(`SELECT * FROM ${sequelize.escapeIdentifier(table)} WHERE id = ?`, {
   replacements: [id],
 });
@@ -221,16 +221,16 @@ sequelize.query(`SELECT * FROM ${sequelize.escapeIdentifier(table)} WHERE id = ?
 
 **Reglas:**
 
-- ❌ Nunca concatenar en where/order/group
-- ✅ Op.like, Op.in, etc. usan parámetros internamente
-- ✅ Validación de esquema en define() previene inyección en DDL
+- âŒ Nunca concatenar en where/order/group
+- âœ… Op.like, Op.in, etc. usan parÃ¡metros internamente
+- âœ… ValidaciÃ³n de esquema en define() previene inyecciÃ³n en DDL
 
 ---
 
 ## 11. Testing Strategy
 
 **Fecha:** 2026-11-13  
-**Decisión:** Dual layer
+**DecisiÃ³n:** Dual layer
 
 | Tipo        | Tool          | Target                                                           |
 | ----------- | ------------- | ---------------------------------------------------------------- |
@@ -242,16 +242,16 @@ sequelize.query(`SELECT * FROM ${sequelize.escapeIdentifier(table)} WHERE id = ?
 
 ---
 
-## 12. Build y Publicación NPM
+## 12. Build y PublicaciÃ³n NPM
 
 **Fecha:** 2026-11-13  
-**Decisión:** Dual package (ESM + CJS) + TypeScript declarations
+**DecisiÃ³n:** Dual package (ESM + CJS) + TypeScript declarations
 
 ```
 dist/
-├── esm/          # ESM modules (package.json "type": "module")
-├── cjs/          # CommonJS (transpilado)
-└── types/        # .d.ts files
+â”œâ”€â”€ esm/          # ESM modules (package.json "type": "module")
+â”œâ”€â”€ cjs/          # CommonJS (transpilado)
+â””â”€â”€ types/        # .d.ts files
 ```
 
 **package.json exports:**
@@ -275,7 +275,7 @@ dist/
 ## 13. CLI de Migraciones
 
 **Fecha:** 2026-11-13  
-**Decisión:** Binario `firebird-orm` incluido en paquete
+**DecisiÃ³n:** Binario `firebird-orm` incluido en paquete
 
 ```bash
 npx firebird-orm migration:create create-users-table
@@ -291,7 +291,7 @@ npx firebird-orm migration:status
 ## 14. Hooks y Validaciones
 
 **Fecha:** 2026-11-13  
-**Decisión:** Hooks en instancia y clase, validaciones sync/async
+**DecisiÃ³n:** Hooks en instancia y clase, validaciones sync/async
 
 **Hooks ciclo de vida:**
 
@@ -306,7 +306,7 @@ npx firebird-orm migration:status
 ## 15. Logging y Debug
 
 **Fecha:** 2026-11-13  
-**Decisión:** Configurable en constructor
+**DecisiÃ³n:** Configurable en constructor
 
 ```typescript
 new Sequelize({
@@ -318,7 +318,16 @@ new Sequelize({
 
 ---
 
-_Última actualización: 2026-11-13 - Análisis técnico completo aprobado para Fase 0_
+_Ãšltima actualizaciÃ³n: 2026-11-13 - AnÃ¡lisis tÃ©cnico completo aprobado para Fase 0_
+
+## 4. GestiÃ³n de Transacciones
+
+**Fecha:** 2026-11-18  
+**DecisiÃ³n:** 
+- Reserva de conexiÃ³n fÃ­sica exclusiva por transacciÃ³n hasta COMMIT/ROLLBACK.
+- Uso de estados internos en objeto Transaction para prevenir operaciones invÃ¡lidas.
+- PropagaciÃ³n explÃ­cita mediante parÃ¡metro  en API CRUD.
+- Cada instancia de Sequelize administra su propio pool de conexiones.
 
 ## 4. Gestión de Transacciones
 
@@ -326,14 +335,5 @@ _Última actualización: 2026-11-13 - Análisis técnico completo aprobado para 
 **Decisión:** 
 - Reserva de conexión física exclusiva por transacción hasta COMMIT/ROLLBACK.
 - Uso de estados internos en objeto Transaction para prevenir operaciones inválidas.
-- Propagación explícita mediante parámetro  en API CRUD.
-- Cada instancia de Sequelize administra su propio pool de conexiones.
-
-## 4. Gesti�n de Transacciones
-
-**Fecha:** 2026-11-18  
-**Decisi�n:** 
-- Reserva de conexi�n f�sica exclusiva por transacci�n hasta COMMIT/ROLLBACK.
-- Uso de estados internos en objeto Transaction para prevenir operaciones inv�lidas.
-- Propagaci�n expl�cita mediante par�metro { transaction: t } en API CRUD.
+- Propagación explícita mediante parámetro { transaction: t } en API CRUD.
 - Cada instancia de Sequelize administra su propio pool de conexiones.

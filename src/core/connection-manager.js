@@ -56,12 +56,29 @@ export class ConnectionManager {
   }
 
   /**
+   * Inicia una transacción nativa en una conexión reservada
+   * @param {object} connection - Conexión reservada
+   * @returns {Promise<object>} Transacción nativa
+   */
+  async startTransaction(connection) {
+    return this.adapter.startTransaction(connection);
+  }
+
+  /**
    * Ejecuta SQL usando el pool (para consultas fuera de transacción)
    * @param {string} sql
    * @param {Array<any>} params
+   * @param {object} [options] - Opciones (transaction, etc.)
    */
-  async execute(sql, params = []) {
+  async execute(sql, params = [], options = {}) {
     if (!this._initialized) await this.init();
+
+    // Si hay transacción activa, usar su conexión reservada
+    if (options.transaction && options.transaction.connection) {
+      return this.adapter.execute(options.transaction.connection, sql, params);
+    }
+
+    // Sin transacción: usar pool normal
     return this.adapter.execute(this.pool, sql, params);
   }
 

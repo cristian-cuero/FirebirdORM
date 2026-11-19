@@ -1,4 +1,4 @@
-import { DatabaseError } from './errors.js';
+import { DatabaseError, ValidationError } from './errors.js';
 
 /**
  * Clase base para todos los modelos del ORM.
@@ -46,14 +46,50 @@ export class Model {
   }
 
   /**
+   * Dispara un hook si existe
+   */
+  static async triggerHook(hookName, instanceOrValues, options = {}) {
+    const hook = this.hooks[hookName];
+    if (hook && typeof hook === 'function') {
+      await hook(instanceOrValues, options);
+    }
+  }
+
+  /**
+   * Valida la instancia según las definiciones de los atributos
+   * @throws {ValidationError} Si alguna validación falla
+   */
+  validate() {
+    const attributes = this.constructor.attributes;
+
+    for (const [attrName, attrDef] of Object.entries(attributes)) {
+      const value = this.dataValues[attrName];
+
+      // Validación allowNull
+      if (attrDef.allowNull === false && (value === null || value === undefined)) {
+        throw new ValidationError(`${attrName} no puede ser nulo (allowNull: false)`);
+      }
+    }
+  }
+
+  /**
    * Inserta un nuevo registro
    */
   static async create(values) {
     try {
+      await this.triggerHook('beforeCreate', values);
+
+      const instance = new this(values);
+      // Validar antes de insertar
+      instance.validate();
+
       const { sql, params } = this.sequelize.dialect.queryGenerator.insertQuery(this, values);
       await this.sequelize.query(sql, params);
-      return new this(values);
+
+      await this.triggerHook('afterCreate', instance);
+      return instance;
     } catch (error) {
+      if (error instanceof ValidationError) throw error;
       throw new DatabaseError(`Error al insertar en ${this.tableName}: ${error.message}`);
     }
   }
@@ -63,8 +99,11 @@ export class Model {
    */
   static async update(values, options) {
     try {
+      await this.triggerHook('beforeUpdate', values, options);
       const { sql, params } = this.sequelize.dialect.queryGenerator.updateQuery(this, values, options);
-      return await this.sequelize.query(sql, params);
+      const result = await this.sequelize.query(sql, params);
+      await this.triggerHook('afterUpdate', values, options);
+      return result;
     } catch (error) {
       throw new DatabaseError(`Error al actualizar en ${this.tableName}: ${error.message}`);
     }
@@ -75,8 +114,11 @@ export class Model {
    */
   static async destroy(options) {
     try {
+      await this.triggerHook('beforeDestroy', options);
       const { sql, params } = this.sequelize.dialect.queryGenerator.deleteQuery(this, options);
-      return await this.sequelize.query(sql, params);
+      const result = await this.sequelize.query(sql, params);
+      await this.triggerHook('afterDestroy', options);
+      return result;
     } catch (error) {
       throw new DatabaseError(`Error al eliminar en ${this.tableName}: ${error.message}`);
     }
@@ -88,7 +130,8 @@ export class Model {
   static async findAll(options = {}) {
     try {
       const { sql, params } = this.sequelize.dialect.queryGenerator.selectQuery(this, options);
-      const rows = await this.sequelize.query(sql, params);
+      // Pasamos options para soporte de transaction
+      const rows = await this.sequelize.query(sql, params, options);
 
       if (options.include && rows.length > 0) {
         return this.groupIncludes(rows, options);
@@ -97,6 +140,37 @@ export class Model {
       return rows.map(row => new this(row));
     } catch (error) {
       throw new DatabaseError(`Error al consultar ${this.tableName}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Busca un único registro
+   */
+  static async findOne(options = {}) {
+    const results = await this.findAll({ ...options, limit: 1 });
+    return results[0] || null;
+  }
+
+  /**
+   * Busca por clave primaria
+   */
+  static async findByPk(id, options = {}) {
+    return this.findOne({ ...options, where: { id } });
+  }
+
+  /**
+   * Cuenta registros
+   */
+  static async count(options = {}) {
+    try {
+      const { sql, params } = this.sequelize.dialect.queryGenerator.countQuery(this, options);
+      const results = await this.sequelize.query(sql, params, options);
+      // Firebird devuelve COUNT en primera columna (COUNT, count, o nombre del alias)
+      const firstRow = results[0] || {};
+      const countValue = firstRow.COUNT ?? firstRow.count ?? Object.values(firstRow)[0] ?? 0;
+      return parseInt(countValue, 10);
+    } catch (error) {
+      throw new DatabaseError(`Error al contar ${this.tableName}: ${error.message}`);
     }
   }
 

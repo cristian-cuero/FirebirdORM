@@ -1,0 +1,1048 @@
+{
+  "nodes": [
+    {
+      "id": "file:ARCHITECTURE.md",
+      "type": "file",
+      "label": "ARCHITECTURE.md",
+      "source_file": "ARCHITECTURE.md",
+      "_origin": "semantic"
+    },
+    {
+      "id": "file:CLAUDE.md",
+      "type": "file",
+      "label": "CLAUDE.md",
+      "source_file": "CLAUDE.md",
+      "_origin": "semantic"
+    },
+    {
+      "id": "file:DECISIONS.md",
+      "type": "file",
+      "label": "DECISIONS.md",
+      "source_file": "DECISIONS.md",
+      "_origin": "semantic"
+    },
+    {
+      "id": "file:README.md",
+      "type": "file",
+      "label": "README.md",
+      "source_file": "README.md",
+      "_origin": "semantic"
+    },
+    {
+      "id": "file:WORKLOG.md",
+      "type": "file",
+      "label": "WORKLOG.md",
+      "source_file": "WORKLOG.md",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:architecture.layered",
+      "type": "concept",
+      "label": "Layered Architecture with Dependency Inversion",
+      "description": "Modular layered architecture decoupling ORM core from specific database drivers via IDriverAdapter interface",
+      "source_location": "ARCHITECTURE.md:L5-L35",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:architecture.public-api",
+      "type": "concept",
+      "label": "Public API Layer",
+      "description": "Facade layer exposing Sequelize, Model, DataTypes, Op, Transaction, Migrator",
+      "source_location": "ARCHITECTURE.md:L8-L11",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:architecture.core-layer",
+      "type": "concept",
+      "label": "Core Layer",
+      "description": "Sequelize facade, Model (Active Record), QueryBuilder (Fluent API), Dialect/QueryGenerator",
+      "source_location": "ARCHITECTURE.md:L14-L26",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:architecture.adapter-layer",
+      "type": "concept",
+      "label": "Adapter Layer",
+      "description": "IDriverAdapter interface abstracting driver operations: connect, pool, execute, transactions",
+      "source_location": "ARCHITECTURE.md:L31-L45",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:sequelize-facade",
+      "type": "component",
+      "label": "Sequelize (Facade)",
+      "description": "Main entry point, manages connections, model registry, transactions",
+      "source_location": "ARCHITECTURE.md:L16-L18",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:model-active-record",
+      "type": "component",
+      "label": "Model (Active Record)",
+      "description": "Active Record pattern with Proxy for transparent attribute access",
+      "source_location": "ARCHITECTURE.md:L17-L19",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:query-builder",
+      "type": "component",
+      "label": "QueryBuilder (Fluent API)",
+      "description": "Fluent query builder generating Firebird-optimized SQL",
+      "source_location": "ARCHITECTURE.md:L18-L20",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:dialect-query-generator",
+      "type": "component",
+      "label": "Dialect / QueryGenerator",
+      "description": "Firebird SQL generation, version-aware (FB 2.5/3.0/4.0/5.0)",
+      "source_location": "ARCHITECTURE.md:L23-L25",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:idriver-adapter",
+      "type": "component",
+      "label": "IDriverAdapter (Interface)",
+      "description": "Interface abstracting driver operations: connect, createPool, execute, startTransaction, commit/rollback, close",
+      "source_location": "ARCHITECTURE.md:L33-L42",
+      "_origin": "semantic"
+    },
+    {
+      "id": "component:node-firebird-adapter",
+      "type": "component",
+      "label": "NodeFirebirdAdapter",
+      "description": "Implementation of IDriverAdapter using node-firebird driver (pure JS, wire protocol)",
+      "source_location": "ARCHITECTURE.md:L43-L45",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:tech-stack",
+      "type": "concept",
+      "label": "Technology Stack Decisions",
+      "description": "Driver: node-firebird; Runtime: Node.js ≥ 18 LTS; Target FB: 3.0+ (4.0/5.0 full); Language: JavaScript native (ESM+CJS); Testing: Jest+Docker; Lint: ESLint+Prettier; CI/CD: GitHub Actions",
+      "source_location": "CLAUDE.md:L12-L23",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:api-style",
+      "type": "concept",
+      "label": "Sequelize-inspired Factory API",
+      "description": "Model definition via sequelize.define() factory function, no decorators, JSDoc for typing",
+      "source_location": "CLAUDE.md:L41-L58",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:roadmap",
+      "type": "concept",
+      "label": "10-Phase Development Roadmap",
+      "description": "Phase 0: Foundation; Phase 1: Connection; Phase 2: Models; Phase 3: Query/CRUD; Phase 4: Associations; Phase 5: Transactions+Hooks; Phase 6: Migrations; Phase 7: Native SQL; Phase 8: Testing+Docs; Phase 9: Build+Publish",
+      "source_location": "CLAUDE.md:L70-L84",
+      "_origin": "semantic"
+    },
+    {
+      "id": "concept:dev-rules",
+      "type": "concept",
+      "label": "Mandatory Development Rules",
+      "description": "No code without phase approval; No deps until Phase 0; TDD; Document decisions in DECISIONS.md; Update WORKLOG.md; Coverage > 85%; ESM+CJS compat; Mandatory parameterization",
+      "source_location": "CLAUDE.md:L86-L94",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:driver-selection",
+      "type": "decision",
+      "label": "Driver Selection: node-firebird",
+      "description": "Use node-firebird (hgourvest) as primary driver - pure JS, zero native deps, wire protocol, active maintenance, production-validated",
+      "source_location": "DECISIONS.md:L7-L35",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:adapter-pattern",
+      "type": "decision",
+      "label": "Adapter Pattern for Drivers",
+      "description": "Core ORM does not depend directly on node-firebird; IDriverAdapter interface abstracts connect, pool, execute, transactions; allows future NativeDriverAdapter",
+      "source_location": "DECISIONS.md:L24-L35",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:versions-supported",
+      "type": "decision",
+      "label": "Supported Versions: Node ≥18 LTS, Firebird 3.0+",
+      "description": "Node.js 18+ LTS (ESM native, fetch, crypto); Firebird 3.0+ full support (4.0/5.0); 2.5 best-effort; auto-detect version on connect",
+      "source_location": "DECISIONS.md:L39-L54",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:pk-strategy",
+      "type": "decision",
+      "label": "Primary Key Strategy: Auto-detect IDENTITY/Generator",
+      "description": "Auto-detect IDENTITY columns (FB4+) else Generator+Trigger (FB2.5/3); RETURNING clause for FB2.1+",
+      "source_location": "DECISIONS.md:L56-L70",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:sql-injection",
+      "type": "decision",
+      "label": "Mandatory Parameterization",
+      "description": "Zero SQL concatenation - all queries must use parameterized statements",
+      "source_location": "DECISIONS.md:L72-L78",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:pagination",
+      "type": "decision",
+      "label": "Unified Pagination API",
+      "description": "Unified pagination API with SQL adapted per Firebird version (SKIP/FETCH for FB4+, ROWS for FB3, legacy for FB2.5)",
+      "source_location": "DECISIONS.md:L80-L86",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:decimal-handling",
+      "type": "decision",
+      "label": "DECIMAL/NUMERIC as String",
+      "description": "Return DECIMAL/NUMERIC as strings in JavaScript to preserve exact precision",
+      "source_location": "DECISIONS.md:L88-L92",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:build-output",
+      "type": "decision",
+      "label": "Dual ESM/CJS Build with .d.ts",
+      "description": "Build outputs both ESM and CJS formats plus TypeScript declarations",
+      "source_location": "DECISIONS.md:L94-L98",
+      "_origin": "semantic"
+    },
+    {
+      "id": "decision:testing-strategy",
+      "type": "decision",
+      "label": "Unit + Integration Testing",
+      "description": "Unit tests with mocks; Integration tests with real Firebird via Docker (3.0/4.0/5.0 matrix)",
+      "source_location": "DECISIONS.md:L100-L106",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:sequelize-class",
+      "type": "api",
+      "label": "Sequelize",
+      "description": "Main entry point class - constructor(config), define(name, attributes, options), authenticate(), sync(), transaction(), close()",
+      "source_location": "CLAUDE.md:L45-L47",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:model-class",
+      "type": "api",
+      "label": "Model",
+      "description": "Base model class - static methods: findByPk, findAll, findOne, create, bulkCreate, destroy, update; instance methods: save, destroy, reload",
+      "source_location": "CLAUDE.md:L47-L48",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:datatypes",
+      "type": "api",
+      "label": "DataTypes",
+      "description": "Firebird type mappings: STRING, INTEGER, BIGINT, FLOAT, DOUBLE, DECIMAL, DATE, DATEONLY, TIME, BOOLEAN, BLOB, TEXT, UUID, ENUM, ARRAY, JSON",
+      "source_location": "CLAUDE.md:L48-L49",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:associations",
+      "type": "api",
+      "label": "Association Types",
+      "description": "HasMany, BelongsTo, HasOne, BelongsToMany - defined via Model.associate() or sequelize.define options",
+      "source_location": "CLAUDE.md:L49-L52",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:operators",
+      "type": "api",
+      "label": "Op (Operators)",
+      "description": "Query operators: eq, ne, gt, gte, lt, lte, like, ilike, in, notIn, between, notBetween, isNull, notNull, and, or, not",
+      "source_location": "CLAUDE.md:L53-L54",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:functions",
+      "type": "api",
+      "label": "fn, col, literal",
+      "description": "SQL functions (fn), column references (col), raw literals (literal) for query building",
+      "source_location": "CLAUDE.md:L55-L56",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:transaction",
+      "type": "api",
+      "label": "Transaction",
+      "description": "Managed transactions with isolation levels, savepoints, auto-commit/rollback",
+      "source_location": "CLAUDE.md:L57-L58",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:migrator",
+      "type": "api",
+      "label": "Migrator / Migration",
+      "description": "Programmatic migration API + CLI commands: migration:create, migration:up, migration:down",
+      "source_location": "CLAUDE.md:L58-L59",
+      "_origin": "semantic"
+    },
+    {
+      "id": "api:errors",
+      "type": "api",
+      "label": "ValidationError, DatabaseError",
+      "description": "Structured error classes for validation and database errors",
+      "source_location": "CLAUDE.md:L59-L60",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:node-firebird",
+      "type": "dependency",
+      "label": "node-firebird",
+      "description": "Pure JavaScript Firebird driver (~100k weekly downloads), wire protocol, no native deps, supports FB 2.5-5.0",
+      "source_location": "DECISIONS.md:L11-L22",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:node-firebird-driver",
+      "type": "dependency",
+      "label": "node-firebird-driver",
+      "description": "Official Firebird driver project - TypeScript interfaces only, not complete implementation, requires fbclient.dll",
+      "source_location": "DECISIONS.md:L13-L14",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:node-firebird-driver-native",
+      "type": "dependency",
+      "label": "node-firebird-driver-native",
+      "description": "Native binding to Firebird client library, better performance but requires compilation, complex deployment",
+      "source_location": "DECISIONS.md:L15-L16",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:jest",
+      "type": "dependency",
+      "label": "Jest",
+      "description": "Testing framework for unit and integration tests",
+      "source_location": "CLAUDE.md:L20",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:docker",
+      "type": "dependency",
+      "label": "Docker",
+      "description": "Container runtime for Firebird integration testing matrix (3.0, 4.0, 5.0)",
+      "source_location": "CLAUDE.md:L20",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:eslint",
+      "type": "dependency",
+      "label": "ESLint",
+      "description": "Linting for JavaScript code quality",
+      "source_location": "CLAUDE.md:L21",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:prettier",
+      "type": "dependency",
+      "label": "Prettier",
+      "description": "Code formatting",
+      "source_location": "CLAUDE.md:L21",
+      "_origin": "semantic"
+    },
+    {
+      "id": "dependency:github-actions",
+      "type": "dependency",
+      "label": "GitHub Actions",
+      "description": "CI/CD pipeline with Firebird version matrix",
+      "source_location": "CLAUDE.md:L22",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-0",
+      "type": "task",
+      "label": "Phase 0: Foundation",
+      "description": "Repository initialization, tooling, CI/CD, Docker matrix - COMPLETED",
+      "source_location": "WORKLOG.md:L14-L19",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-1",
+      "type": "task",
+      "label": "Phase 1: Connection Layer",
+      "description": "IDriverAdapter, NodeFirebirdAdapter, ConnectionManager, Dialect, VersionDetector - COMPLETED",
+      "source_location": "WORKLOG.md:L20-L27",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-2",
+      "type": "task",
+      "label": "Phase 2: Models & DataTypes",
+      "description": "DataTypes class structure, Model base with Proxy, defineModel factory, sequelize.define - COMPLETED",
+      "source_location": "WORKLOG.md:L29-L35",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-3",
+      "type": "task",
+      "label": "Phase 3: Query/CRUD (In Progress)",
+      "description": "QueryGenerator, QueryBuilder, Operators, full CRUD operations - IN PROGRESS",
+      "source_location": "WORKLOG.md:L4-L5",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-4",
+      "type": "task",
+      "label": "Phase 4: Associations",
+      "description": "HasMany, BelongsTo, HasOne, BelongsToMany - PLANNED",
+      "source_location": "CLAUDE.md:L78-L79",
+      "_origin": "semantic"
+    },
+    {
+      "id": "task:phase-5",
+      "type": "task",
+      "label": "Phase 5: Transactions + Hooks + Validations",
+      "description": "Transaction infrastructure with connection reservation and states - COMPLETED (per git log)",
+      "source_location": "WORKLOG.md:L37-L40",
+      "_origin": "semantic"
+    },
+    {
+      "id": "config:connection-config",
+      "type": "config",
+      "label": "Connection Configuration",
+      "description": "host, port, database, user, password, pool (min, max, acquire, idle), dialectOptions",
+      "source_location": "README.md:L39-L46",
+      "_origin": "semantic"
+    },
+    {
+      "id": "config:pool-config",
+      "type": "config",
+      "label": "Pool Configuration",
+      "description": "min: 2, max: 10, acquire: 30000, idle: 10000, eviction: 1000",
+      "source_location": "README.md:L45-L46",
+      "_origin": "semantic"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "concept:architecture.layered",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "concept:architecture.public-api",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "concept:architecture.core-layer",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "concept:architecture.adapter-layer",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:sequelize-facade",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:model-active-record",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:query-builder",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:dialect-query-generator",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:idriver-adapter",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:ARCHITECTURE.md",
+      "target": "component:node-firebird-adapter",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "concept:tech-stack",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "concept:api-style",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "concept:roadmap",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "concept:dev-rules",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:sequelize-class",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:model-class",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:datatypes",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:associations",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:operators",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:functions",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:transaction",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:migrator",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:CLAUDE.md",
+      "target": "api:errors",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:driver-selection",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:adapter-pattern",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:versions-supported",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:pk-strategy",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:sql-injection",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:pagination",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:decimal-handling",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:build-output",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "decision:testing-strategy",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "dependency:node-firebird",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "dependency:node-firebird-driver",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:DECISIONS.md",
+      "target": "dependency:node-firebird-driver-native",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:README.md",
+      "target": "config:connection-config",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:README.md",
+      "target": "config:pool-config",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:WORKLOG.md",
+      "target": "task:phase-0",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:WORKLOG.md",
+      "target": "task:phase-1",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:WORKLOG.md",
+      "target": "task:phase-2",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:WORKLOG.md",
+      "target": "task:phase-3",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "file:WORKLOG.md",
+      "target": "task:phase-5",
+      "type": "contains",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.adapter-layer",
+      "target": "component:idriver-adapter",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.adapter-layer",
+      "target": "component:node-firebird-adapter",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.core-layer",
+      "target": "component:sequelize-facade",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.core-layer",
+      "target": "component:model-active-record",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.core-layer",
+      "target": "component:query-builder",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:architecture.core-layer",
+      "target": "component:dialect-query-generator",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:driver-selection",
+      "target": "dependency:node-firebird",
+      "type": "decides",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:driver-selection",
+      "target": "dependency:node-firebird-driver",
+      "type": "decides",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:driver-selection",
+      "target": "dependency:node-firebird-driver-native",
+      "type": "decides",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:adapter-pattern",
+      "target": "component:idriver-adapter",
+      "type": "decides",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:adapter-pattern",
+      "target": "component:node-firebird-adapter",
+      "type": "decides",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "decision:versions-supported",
+      "target": "concept:tech-stack",
+      "type": "decides",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "component:node-firebird-adapter",
+      "target": "dependency:node-firebird",
+      "type": "depends_on",
+      "confidence": 0.95,
+      "_origin": "semantic"
+    },
+    {
+      "source": "component:dialect-query-generator",
+      "target": "decision:pagination",
+      "type": "implements",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "component:dialect-query-generator",
+      "target": "decision:pk-strategy",
+      "type": "implements",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "api:sequelize-class",
+      "target": "component:sequelize-facade",
+      "type": "implements",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "api:model-class",
+      "target": "component:model-active-record",
+      "type": "implements",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-1",
+      "target": "component:idriver-adapter",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-1",
+      "target": "component:node-firebird-adapter",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-2",
+      "target": "api:datatypes",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-2",
+      "target": "api:model-class",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-3",
+      "target": "component:query-builder",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-3",
+      "target": "component:dialect-query-generator",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "task:phase-5",
+      "target": "api:transaction",
+      "type": "implements",
+      "confidence": 0.85,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:tech-stack",
+      "target": "dependency:jest",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:tech-stack",
+      "target": "dependency:docker",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:tech-stack",
+      "target": "dependency:eslint",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:tech-stack",
+      "target": "dependency:prettier",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:tech-stack",
+      "target": "dependency:github-actions",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-0",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-1",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-2",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-3",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-4",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    },
+    {
+      "source": "concept:roadmap",
+      "target": "task:phase-5",
+      "type": "contains",
+      "confidence": 0.9,
+      "_origin": "semantic"
+    }
+  ],
+  "hyperedges": [
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:decision:driver-selection",
+      "nodes": [
+        "decision:driver-selection",
+        "component:node-firebird-adapter",
+        "component:connection-manager",
+        "dependency:node-firebird"
+      ],
+      "label": "decision_impact",
+      "confidence": 0.9
+    },
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:decision:adapter-pattern",
+      "nodes": [
+        "decision:adapter-pattern",
+        "component:idriver-adapter",
+        "component:node-firebird-adapter",
+        "component:connection-manager"
+      ],
+      "label": "decision_impact",
+      "confidence": 0.95
+    },
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:decision:versions-supported",
+      "nodes": [
+        "decision:versions-supported",
+        "component:dialect-query-generator",
+        "component:connection-manager",
+        "api:datatypes"
+      ],
+      "label": "decision_impact",
+      "confidence": 0.9
+    },
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:decision:pk-strategy",
+      "nodes": [
+        "decision:pk-strategy",
+        "component:dialect-query-generator",
+        "api:model-class",
+        "api:datatypes"
+      ],
+      "label": "decision_impact",
+      "confidence": 0.9
+    },
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:decision:sql-injection",
+      "nodes": [
+        "decision:sql-injection",
+        "component:query-builder",
+        "component:dialect-query-generator",
+        "api:sequelize-class"
+      ],
+      "label": "decision_impact",
+      "confidence": 0.95
+    },
+    {
+      "type": "hyperedge",
+      "id": "hyperedge:dev-rules",
+      "nodes": [
+        "concept:dev-rules",
+        "task:phase-0",
+        "task:phase-1",
+        "task:phase-2",
+        "task:phase-3"
+      ],
+      "label": "enforces",
+      "confidence": 0.9
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "ARCHITECTURE.md": 120,
+    "CLAUDE.md": 180,
+    "DECISIONS.md": 200,
+    "README.md": 150,
+    "WORKLOG.md": 80
+  }
+}

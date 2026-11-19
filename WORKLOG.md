@@ -1,6 +1,6 @@
-# WORKLOG - firebird-orm
+﻿# WORKLOG - firebird-orm
 
-## Estado Actual: **FASE 3 - En curso**
+## Estado Actual: **FASE 6 - Pendiente (Iniciando)**
 
 ---
 
@@ -38,24 +38,22 @@
 
 - **Decisión:** Implementar reserva de conexión en el pool para transacciones atómicas.
 - **Parametrización:** Añadir configuración de `max` pool para control de recursos (vía .env).
-- **Tarea Pendiente:** Implementar `reserveConnection` en `IDriverAdapter` y `NodeFirebirdAdapter`.
-- **Tarea Pendiente:** Implementar `AsyncLocalStorage` para contexto de transacciones.
-
 - **Asociaciones:** Implementación completa de `HasMany`, `BelongsTo`, `HasOne`, `BelongsToMany` con API estilo Sequelize (`Model.hasMany(...)`).
 - **Eager Loading:** Soporte para `include` en `findAll` con `LEFT JOIN` automático generado por `QueryGenerator`.
-- **Resolución de Colisiones:** Uso de aliases explícitos (`"TABLA.COLUMNA"`) para evitar ambigüedad en columnas con mismo nombre (ej: `id`).
-- **Re-ensamblado Inteligente:** Conversión de filas planas (resultado JOIN) a objetos anidados (`user.posts[]`) instanciando modelos reales (con Proxy).
 - **Acceso Case-Insensitive:** Mejora del `Proxy` en `Model` para acceso transparente (`user.name`, `user.NAME`, `user.Name`).
-- **Verificación:** **Todos los 20 tests de integración (FB 2.5, 3.0, 4.0, 5.0) y 7 unitarios pasan.**
-
----
 
 ### 2026-11-15 - Completada Fase 3 (QueryBuilder y CRUD Completo)
 
 - **Operadores:** Implementado set completo (`eq, ne, gt, gte, lt, lte, like, notLike, in, notIn, between, notBetween, is, and, or`).
 - **QueryGenerator:** Reescrito con `parseWhere` recursivo para soportar lógica compleja anidada (`AND`/`OR`).
 - **CRUD Completo:** Métodos `create`, `findAll`, `update`, `destroy` en `Model` con parametrización segura y manejo de errores (`DatabaseError`).
-- **Verificación:** Tests de integración validados en Firebird 2.5 y 3.0.
+
+### 2026-11-19 - COMPLETADA Fase 5 (Transacciones, Hooks y Validaciones)
+
+- **Transacciones:** Infraestructura `Transaction` con estados (IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED) y reserva de conexión en `ConnectionManager`.
+- **Validaciones:** Método `Model.validate()` para verificar atributos antes de persistir (`allowNull`, etc).
+- **Hooks:** Sistema de eventos `beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDestroy`, `afterDestroy` integrado en el ciclo de vida CRUD.
+- **Verificación:** 90/90 tests unitarios pasando, cubriendo hooks y validaciones.
 
 ---
 
@@ -68,34 +66,8 @@
 | **Fase 2** | DataTypes, Model base, Decoradores, Factory define(), Sync  | ✅ Completado|
 | **Fase 3** | Query/CRUD: QueryGenerator, QueryBuilder, Op, CRUD completo | ✅ Completado|
 | **Fase 4** | Relaciones: HasMany, BelongsTo, HasOne, BelongsToMany       | ✅ Completado|
-| **Fase 5** | Transacciones + Hooks + Validaciones                        | 🚀 **Siguiente** |
-| **Fase 6** | Migraciones + CLI                                           | ⏳ Pendiente |
+| **Fase 5** | Transacciones + Hooks + Validaciones                        | ✅ Completado|
+| **Fase 6** | Migraciones + CLI                                           | 🚀 **Siguiente** |
 | **Fase 7** | Consultas nativas + Utilidades SQL                          | ⏳ Pendiente |
 | **Fase 8** | Testing exhaustivo, Docs, Ejemplos                          | ⏳ Pendiente |
 | **Fase 9** | Build dual, npm publish, Release                            | ⏳ Pendiente |
-...[truncated]
-(the rest of the table)
-
----
-
-## Bloqueadores Actuales
-
-- Ninguno. **Fase 4 completada**. Listo para iniciar Fase 5 (Transacciones, Hooks, Validaciones).
-
----
-
-## Notas de Sesión
-
-- Usuario confirmó `node-firebird` como driver principal.
-- Implementado contrato `IDriverAdapter` con JSDoc.
-- Implementado `NodeFirebirdAdapter` funcional.
-
-### 2026-11-18 - Inicio Fase 5: Infraestructura de Pool y Transacciones
-- **Decisión:** Implementar reserva de conexión en  y clase  con estados (IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED).
-- **Decisión:** Propagación explícita de transacciones en consultas (sin AsyncLocalStorage por ahora).
-- **Tarea:** Refactor de ConnectionManager y creación de clase Transaction.
-
-### 2026-11-18 - Inicio Fase 5: Infraestructura de Pool y Transacciones
-- **Decisi�n:** Implementar reserva de conexi�n en ConnectionManager y clase Transaction con estados (IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED).
-- **Decisi�n:** Propagaci�n expl�cita de transacciones en consultas (sin AsyncLocalStorage por ahora).
-- **Tarea:** Refactor de ConnectionManager y creaci�n de clase Transaction.

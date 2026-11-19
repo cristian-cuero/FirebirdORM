@@ -22,6 +22,10 @@ export function defineModel(sequelize, name, attributes, options = {}) {
       return attributes;
     }
 
+    static get hooks() {
+      return options.hooks || {};
+    }
+
     // Inyectamos la instancia de sequelize al modelo
     static get sequelize() {
       return sequelize;

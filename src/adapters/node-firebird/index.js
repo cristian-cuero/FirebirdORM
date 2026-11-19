@@ -23,22 +23,35 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
   }
 
   /**
-   * Ejecuta una consulta SQL usando el pool (para consultas autónomas)
-   * @param {object} poolInstance
+   * Ejecuta una consulta SQL.
+   * Si connection es una instancia de pool, obtiene una conexión, ejecuta y la devuelve (detach).
+   * Si connection es una conexión reservada (db), la usa directamente SIN hacer detach.
+   * @param {object} connection - Pool o conexión reservada
    * @param {string} sql
    * @param {Array<any>} params
    */
-  async execute(poolInstance, sql, params = []) {
+  async execute(connection, sql, params = []) {
     return new Promise((resolve, reject) => {
-      poolInstance.get((err, db) => {
-        if (err) return reject(err);
+      // Si tiene método .get -> es un pool, obtener conexión
+      const isPool = typeof connection.get === 'function';
 
-        db.query(sql, params, (err, result) => {
-          db.detach(); // Devolver conexión al pool
+      if (isPool) {
+        connection.get((err, db) => {
+          if (err) return reject(err);
+          db.query(sql, params, (err, result) => {
+            db.detach(); // Devolver al pool
+            if (err) return reject(err);
+            resolve(result);
+          });
+        });
+      } else {
+        // Es una conexión reservada (db), usar directamente
+        connection.query(sql, params, (err, result) => {
+          // NO hacemos detach aquí, la transacción gestiona la conexión
           if (err) return reject(err);
           resolve(result);
         });
-      });
+      }
     });
   }
 
@@ -93,7 +106,10 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
     if (!tx) throw new Error('No active transaction on this connection');
     return new Promise((resolve, reject) => {
       tx.commit(err => {
-        if (err) return reject(err);
+        if (err) {
+          delete connection.__nativeTransaction;
+          return reject(err);
+        }
         delete connection.__nativeTransaction;
         resolve();
       });
@@ -109,7 +125,10 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
     if (!tx) throw new Error('No active transaction on this connection');
     return new Promise((resolve, reject) => {
       tx.rollback(err => {
-        if (err) return reject(err);
+        if (err) {
+          delete connection.__nativeTransaction;
+          return reject(err);
+        }
         delete connection.__nativeTransaction;
         resolve();
       });

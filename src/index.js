@@ -24,6 +24,7 @@ export { Transaction } from './transactions/transaction.js';
 // Migrations
 export { Migration } from './migrations/migration.js';
 export { Migrator } from './migrations/migrator.js';
+export { QueryInterface } from './migrations/query-interface.js';
 
 // Errors
 export {
@@ -36,6 +37,9 @@ export {
   UniqueConstraintError,
   ExclusionConstraintError,
 } from './core/errors.js';
+
+// Utils
+export { SqlEscape } from './utils/sql-escape.js';
 
 // Version
 export { VERSION } from './version.js';
