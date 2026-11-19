@@ -54,6 +54,8 @@ export class Dialect {
         return major >= 3;
       case 'truncate': // TRUNCATE TABLE
         return major >= 3;
+      case 'limit_offset': // LIMIT/OFFSET syntax (FB 3.0+)
+        return major >= 3;
       default:
         return false;
     }

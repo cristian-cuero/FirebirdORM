@@ -71,10 +71,10 @@ export class QueryGenerator {
     // 5. LIMIT/OFFSET (paginación)
     const pagination = this._buildPagination(options.limit, options.offset);
 
-    // 6. Construcción final
-    let sql = `SELECT ${columns.join(', ')} FROM ${model.tableName}${joins}${whereClause}${orderClause}${pagination.sql}`;
+    // 6. Construcción final - FIRST/SKIP va después de SELECT
+    let sql = `SELECT ${pagination.sql ? pagination.sql + ' ' : ''}${columns.join(', ')} FROM ${model.tableName}${joins}${whereClause}${orderClause}`;
 
-    return { sql, params: [...where.params, ...pagination.params] };
+    return { sql, params: [...pagination.params, ...where.params] };
   }
 
   /**
@@ -353,22 +353,24 @@ export class QueryGenerator {
 
     if (!limit && !offset) return { sql: '', params: [] };
 
-    const supportsLimit = this.dialect?.supports?.('limit_offset') ?? true; // FB 3.0+
+    const supportsLimitOffset = this.dialect?.supports?.('limit_offset') ?? false;
+    // Corregido: LIMIT/OFFSET no es estándar en Firebird. Usar FIRST/SKIP siempre.
+    const supportsOffsetFetch = this.dialect?.versionParts && this.dialect.versionParts[0] >= 4;
 
-    if (supportsLimit) {
-      // Firebird 3.0+ soporta LIMIT/OFFSET
+    if (supportsOffsetFetch) {
+      // Firebird 4+: OFFSET ... ROWS FETCH NEXT ... ROWS ONLY
       let sql = '';
-      if (limit) {
-        sql += ` LIMIT ?`;
-        params.push(limit);
-      }
       if (offset) {
-        sql += ` OFFSET ?`;
+        sql += ` OFFSET ? ROWS`;
         params.push(offset);
+      }
+      if (limit) {
+        sql += ` FETCH NEXT ? ROWS ONLY`;
+        params.push(limit);
       }
       return { sql, params };
     } else {
-      // Firebird 2.5: FIRST / SKIP
+      // Firebird 2.5/3.0: FIRST/SKIP
       let sql = '';
       if (limit && offset) {
         sql += ` ROWS ? TO ?`;

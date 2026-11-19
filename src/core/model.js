@@ -101,7 +101,7 @@ export class Model {
     try {
       await this.triggerHook('beforeUpdate', values, options);
       const { sql, params } = this.sequelize.dialect.queryGenerator.updateQuery(this, values, options);
-      const result = await this.sequelize.query(sql, params);
+      const result = await this.sequelize.query(sql, params, options);
       await this.triggerHook('afterUpdate', values, options);
       return result;
     } catch (error) {
@@ -116,7 +116,7 @@ export class Model {
     try {
       await this.triggerHook('beforeDestroy', options);
       const { sql, params } = this.sequelize.dialect.queryGenerator.deleteQuery(this, options);
-      const result = await this.sequelize.query(sql, params);
+      const result = await this.sequelize.query(sql, params, options);
       await this.triggerHook('afterDestroy', options);
       return result;
     } catch (error) {
