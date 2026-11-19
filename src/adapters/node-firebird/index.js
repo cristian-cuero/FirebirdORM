@@ -69,40 +69,48 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
   }
 
   /**
-   * Inicia una transacción en una conexión reservada
+   * Inicia una transacción nativa en la conexión reservada
+   * Almacena la transacción nativa en connection.__nativeTransaction
    * @param {object} connection - Conexión reservada
-   * @returns {Promise<object>} - Objeto de transacción de node-firebird
    */
   async startTransaction(connection) {
     return new Promise((resolve, reject) => {
-      connection.transaction(fb => {
-        if (!fb) return reject(new Error('Failed to start transaction'));
-        resolve(fb);
-      });
-    });
-  }
-
-  /**
-   * Confirma una transacción
-   * @param {object} transaction - Objeto de transacción
-   */
-  async commit(transaction) {
-    return new Promise((resolve, reject) => {
-      transaction.commit(err => {
+      connection.transaction({}, (err, fb) => {
         if (err) return reject(err);
+        if (!fb) return reject(new Error('Failed to start transaction'));
+        connection.__nativeTransaction = fb;
         resolve();
       });
     });
   }
 
   /**
-   * Revierte una transacción
-   * @param {object} transaction - Objeto de transacción
+   * Confirma la transacción nativa almacenada en la conexión
+   * @param {object} connection - Conexión con transacción activa
    */
-  async rollback(transaction) {
+  async commit(connection) {
+    const tx = connection.__nativeTransaction;
+    if (!tx) throw new Error('No active transaction on this connection');
     return new Promise((resolve, reject) => {
-      transaction.rollback(err => {
+      tx.commit(err => {
         if (err) return reject(err);
+        delete connection.__nativeTransaction;
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * Revierte la transacción nativa almacenada en la conexión
+   * @param {object} connection - Conexión con transacción activa
+   */
+  async rollback(connection) {
+    const tx = connection.__nativeTransaction;
+    if (!tx) throw new Error('No active transaction on this connection');
+    return new Promise((resolve, reject) => {
+      tx.rollback(err => {
+        if (err) return reject(err);
+        delete connection.__nativeTransaction;
         resolve();
       });
     });

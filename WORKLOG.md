@@ -89,3 +89,13 @@
 - Usuario confirm贸 `node-firebird` como driver principal.
 - Implementado contrato `IDriverAdapter` con JSDoc.
 - Implementado `NodeFirebirdAdapter` funcional.
+
+### 2026-11-18 - Inicio Fase 5: Infraestructura de Pool y Transacciones
+- **Decisi贸n:** Implementar reserva de conexi贸n en  y clase  con estados (IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED).
+- **Decisi贸n:** Propagaci贸n expl铆cita de transacciones en consultas (sin AsyncLocalStorage por ahora).
+- **Tarea:** Refactor de ConnectionManager y creaci贸n de clase Transaction.
+
+### 2026-11-18 - Inicio Fase 5: Infraestructura de Pool y Transacciones
+- **Decisi髇:** Implementar reserva de conexi髇 en ConnectionManager y clase Transaction con estados (IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED).
+- **Decisi髇:** Propagaci髇 expl韈ita de transacciones en consultas (sin AsyncLocalStorage por ahora).
+- **Tarea:** Refactor de ConnectionManager y creaci髇 de clase Transaction.

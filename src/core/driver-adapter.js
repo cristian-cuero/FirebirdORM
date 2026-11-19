@@ -45,7 +45,6 @@ export class IDriverAdapter {
   /**
    * Inicia una transacción.
    * @param {object} connection - Conexión activa
-   * @returns {Promise<object>} - Objeto de transacción
    */
   async startTransaction(connection) {
     throw new Error('Method startTransaction() must be implemented');
@@ -53,17 +52,17 @@ export class IDriverAdapter {
 
   /**
    * Confirma una transacción.
-   * @param {object} transaction - Objeto de transacción
+   * @param {object} connection - Conexión activa con transacción
    */
-  async commit(transaction) {
+  async commit(connection) {
     throw new Error('Method commit() must be implemented');
   }
 
   /**
    * Revierte una transacción.
-   * @param {object} transaction - Objeto de transacción
+   * @param {object} connection - Conexión activa con transacción
    */
-  async rollback(transaction) {
+  async rollback(connection) {
     throw new Error('Method rollback() must be implemented');
   }
 

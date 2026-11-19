@@ -319,3 +319,21 @@ new Sequelize({
 ---
 
 _脷ltima actualizaci贸n: 2026-11-13 - An谩lisis t茅cnico completo aprobado para Fase 0_
+
+## 4. Gesti贸n de Transacciones
+
+**Fecha:** 2026-11-18  
+**Decisi贸n:** 
+- Reserva de conexi贸n f铆sica exclusiva por transacci贸n hasta COMMIT/ROLLBACK.
+- Uso de estados internos en objeto Transaction para prevenir operaciones inv谩lidas.
+- Propagaci贸n expl铆cita mediante par谩metro  en API CRUD.
+- Cada instancia de Sequelize administra su propio pool de conexiones.
+
+## 4. Gesti髇 de Transacciones
+
+**Fecha:** 2026-11-18  
+**Decisi髇:** 
+- Reserva de conexi髇 f韘ica exclusiva por transacci髇 hasta COMMIT/ROLLBACK.
+- Uso de estados internos en objeto Transaction para prevenir operaciones inv醠idas.
+- Propagaci髇 expl韈ita mediante par醡etro { transaction: t } en API CRUD.
+- Cada instancia de Sequelize administra su propio pool de conexiones.
