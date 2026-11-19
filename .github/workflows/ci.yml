@@ -23,8 +23,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # package.json currently contains dotenv but package-lock.json does not.
+      # npm install resolves the manifest/lock mismatch in this ephemeral runner.
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Run ESLint
         run: npm run lint
@@ -49,43 +51,14 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Run unit tests
         run: npm run test:unit
 
   integration-tests:
-    name: Integration Tests (Firebird ${{ matrix.fb-version }})
+    name: Integration Tests (Firebird 2.5, 3, 4 & 5)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        fb-version: ['3.0', '4.0', '5.0']
-        include:
-          - fb-version: '3.0'
-            image: jacobalberty/firebird:3.0-latest
-            port: 3050
-          - fb-version: '4.0'
-            image: jacobalberty/firebird:4.0-latest
-            port: 3050
-          - fb-version: '5.0'
-            image: jacobalberty/firebird:5.0-latest
-            port: 3050
-    services:
-      firebird:
-        image: ${{ matrix.image }}
-        env:
-          ISC_PASSWORD: masterkey
-          FIREBIRD_DATABASE: test.fdb
-          FIREBIRD_USER: SYSDBA
-          FIREBIRD_PASSWORD: masterkey
-        ports:
-          - ${{ matrix.port }}:3050
-        options: >-
-          --health-cmd="isql -q -user SYSDBA -password masterkey localhost:/tmp/firebird/test.fdb -e 'select 1 from rdb$database;'"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -97,29 +70,45 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
-      - name: Wait for Firebird to be ready
+      # The integration suite connects to all four ports in the repository's
+      # docker-compose.yml, so all Firebird services must run in the same job.
+      - name: Start Firebird matrix
+        run: docker compose up -d
+
+      - name: Wait for all Firebird instances
+        shell: bash
         run: |
-          for i in {1..30}; do
-            if nc -z localhost ${{ matrix.port }}; then
-              echo "Firebird ${{ matrix.fb-version }} is ready"
-              exit 0
+          set -e
+          for port in 3053 3050 3054 3052; do
+            ready=false
+            for attempt in {1..60}; do
+              if nc -z 127.0.0.1 "$port"; then
+                echo "Firebird on port $port is ready"
+                ready=true
+                break
+              fi
+              echo "Waiting for Firebird on port $port ($attempt/60)"
+              sleep 2
+            done
+            if [ "$ready" != true ]; then
+              echo "Firebird on port $port did not become ready"
+              docker compose ps
+              docker compose logs
+              exit 1
             fi
-            echo "Waiting for Firebird... ($i/30)"
-            sleep 2
           done
-          echo "Firebird failed to start"
-          exit 1
+
+      - name: Show Firebird services
+        run: docker compose ps
 
       - name: Run integration tests
-        env:
-          FB_HOST: localhost
-          FB_PORT: ${{ matrix.port }}
-          FB_DATABASE: test.fdb
-          FB_USER: SYSDBA
-          FB_PASSWORD: masterkey
         run: npm run test:integration
+
+      - name: Stop Firebird services
+        if: always()
+        run: docker compose down
 
   build:
     name: Build
@@ -137,7 +126,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -165,7 +154,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
