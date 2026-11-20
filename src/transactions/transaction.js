@@ -2,10 +2,25 @@
  * Representa una transacción en Firebird.
  */
 export class Transaction {
-  constructor(connectionManager) {
-    this.connectionManager = connectionManager;
+  /**
+   * @param {ConnectionManager|Sequelize} connectionManagerOrSequelize - ConnectionManager o instancia de Sequelize
+   */
+  constructor(connectionManagerOrSequelize) {
+    // Aceptar tanto ConnectionManager como instancia de Sequelize (para compatibilidad)
+    this.connectionManager = connectionManagerOrSequelize.connectionManager || connectionManagerOrSequelize;
     this.connection = null;
     this.state = 'IDLE'; // IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED
+  }
+
+  /**
+   * Factory method to create and start a transaction in one call.
+   * @param {ConnectionManager|Sequelize} connectionManagerOrSequelize
+   * @returns {Promise<Transaction>}
+   */
+  static async start(connectionManagerOrSequelize) {
+    const tx = new Transaction(connectionManagerOrSequelize);
+    await tx.start();
+    return tx;
   }
 
   async start() {

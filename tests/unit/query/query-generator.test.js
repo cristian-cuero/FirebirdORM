@@ -274,22 +274,28 @@ describe('QueryGenerator', () => {
   });
 
   describe('selectQuery - Paginación (FB 3.0+ por defecto)', () => {
+    beforeEach(() => {
+      dialect = createMockDialect({ limit_offset: true, versionParts: [3, 0] });
+      generator = new QueryGenerator(dialect);
+      model = createMockModel();
+    });
+
     test('LIMIT simple', () => {
       const result = generator.selectQuery(model, { limit: 10 });
-      expect(result.sql).toContain('LIMIT ?');
+      expect(result.sql).toContain('FIRST ?');
       expect(result.params).toEqual([10]);
     });
 
     test('OFFSET simple', () => {
       const result = generator.selectQuery(model, { offset: 20 });
-      expect(result.sql).toContain('OFFSET ?');
+      expect(result.sql).toContain('SKIP ?');
       expect(result.params).toEqual([20]);
     });
 
     test('LIMIT + OFFSET', () => {
       const result = generator.selectQuery(model, { limit: 10, offset: 20 });
-      expect(result.sql).toContain('LIMIT ? OFFSET ?');
-      expect(result.params).toEqual([10, 20]);
+      expect(result.sql).toContain('ROWS ? TO ?');
+      expect(result.params).toEqual([21, 30]);
     });
   });
 

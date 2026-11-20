@@ -10,8 +10,6 @@ describe('Integration - Eager Loading (JOINs)', () => {
   for (const version of versions) {
     describe(`Backend: ${version.name}`, () => {
       let sequelize;
-      let User;
-      let Post;
 
       beforeAll(async () => {
         sequelize = new Sequelize({
@@ -22,41 +20,40 @@ describe('Integration - Eager Loading (JOINs)', () => {
           password: 'masterkey',
         });
         await sequelize.init();
-
-        // Creamos tablas con relación
-        await sequelize.query('CREATE TABLE users (id INTEGER PRIMARY KEY, name VARCHAR(50))');
-        await sequelize.query('CREATE TABLE posts (id INTEGER PRIMARY KEY, user_id INTEGER, title VARCHAR(100))');
-
-        User = sequelize.define('User', { id: DataTypes.INTEGER, name: DataTypes.STRING() }, { tableName: 'users' });
-        Post = sequelize.define('Post', { id: DataTypes.INTEGER, user_id: DataTypes.INTEGER, title: DataTypes.STRING() }, { tableName: 'posts' });
-
-        User.hasMany(Post, { foreignKey: 'user_id' });
       });
 
       afterAll(async () => {
-        await sequelize.query('DROP TABLE posts');
-        await sequelize.query('DROP TABLE users');
         await sequelize.close();
       });
 
       test('Debe realizar JOIN automático al usar include', async () => {
-        // Insertamos datos usando la instancia sequelize
-        await sequelize.query('INSERT INTO users (id, name) VALUES (1, \'Pisco\')');
-        await sequelize.query('INSERT INTO posts (id, user_id, title) VALUES (101, 1, \'Hola Mundo\')');
+        const suffix = Date.now();
+        const usersTable = `users_${suffix}`;
+        const postsTable = `posts_${suffix}`;
 
-        // Aquí está el reto: Eager Loading
-        // El ORM debe hacer el JOIN y devolver el objeto anidado
+        await sequelize.query(`CREATE TABLE ${usersTable} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
+        await sequelize.query(`CREATE TABLE ${postsTable} (id INTEGER PRIMARY KEY, user_id INTEGER, title VARCHAR(100))`);
+
+        const User = sequelize.define('User', { id: DataTypes.INTEGER, name: DataTypes.STRING() }, { tableName: usersTable });
+        const Post = sequelize.define('Post', { id: DataTypes.INTEGER, user_id: DataTypes.INTEGER, title: DataTypes.STRING() }, { tableName: postsTable });
+
+        User.hasMany(Post, { foreignKey: 'user_id' });
+
+        await sequelize.query(`INSERT INTO ${usersTable} (id, name) VALUES (1, 'Pisco')`);
+        await sequelize.query(`INSERT INTO ${postsTable} (id, user_id, title) VALUES (101, 1, 'Hola Mundo')`);
+
         const users = await User.findAll({
           include: [Post]
         });
 
-        // Verificamos que trajo el usuario
         expect(users.length).toBe(1);
         expect(users[0].NAME).toBe('Pisco');
 
-        // Verificamos que trajo los posts relacionados
         expect(users[0].posts).toBeDefined();
         expect(users[0].posts[0].title).toBe('Hola Mundo');
+
+        await sequelize.query(`DROP TABLE ${postsTable}`);
+        await sequelize.query(`DROP TABLE ${usersTable}`);
       });
     });
   }

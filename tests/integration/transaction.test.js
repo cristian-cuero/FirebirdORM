@@ -3,8 +3,9 @@ import { DataTypes } from '../../src/core/data-types.js';
 import { Transaction } from '../../src/transactions/transaction.js';
 
 describe('Integration - Transaction Isolation', () => {
+  const TABLE_PREFIX = 'tx_';
+
   let sequelize;
-  let TestModel;
 
   beforeAll(async () => {
     sequelize = new Sequelize({
@@ -15,92 +16,111 @@ describe('Integration - Transaction Isolation', () => {
       password: 'masterkey',
     });
     await sequelize.init();
-    try {
-      await sequelize.query('DROP TABLE trans_test');
-    } catch (e) {
-      // Table might not exist, ignore
-    }
-    await sequelize.query('CREATE TABLE trans_test (id INTEGER PRIMARY KEY, name VARCHAR(50))');
-    TestModel = sequelize.define('TestModel', {
-      id: DataTypes.INTEGER,
-      name: DataTypes.STRING(50)
-    }, { tableName: 'trans_test' });
   });
 
   afterAll(async () => {
-    try {
-      await sequelize.query('DROP TABLE trans_test');
-    } catch (e) {
-      // Ignore
-    }
     await sequelize.close();
   });
 
+  // Helper to generate unique short IDs (avoid INTEGER overflow)
+  const genId = () => Math.floor(Math.random() * 100000) + Date.now() % 100000;
+  const genTableName = () => `${TABLE_PREFIX}${Math.random().toString(36).slice(2, 8)}`;
+
   test('INSERT/ROLLBACK should be isolated', async () => {
-    const tx = new Transaction(sequelize.connectionManager);
-    await tx.start();
+    const tableName = genTableName();
+    await sequelize.query(`CREATE TABLE ${tableName} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
 
-    // Perform INSERT within transaction
-    await TestModel.create({ id: 1, name: 'TxTest' }, { transaction: tx });
+    const TestModel = sequelize.define('TestModel', {
+      id: DataTypes.INTEGER,
+      name: DataTypes.STRING(50)
+    }, { tableName });
 
-    // Check inside tx - should find it
-    const inside = await TestModel.findAll({ where: { id: 1 }, transaction: tx });
+    const tx = await Transaction.start(sequelize);
+    const id = genId();
+
+    await TestModel.create({ id, name: 'TxTest' }, { transaction: tx });
+
+    const inside = await TestModel.findAll({ where: { id }, transaction: tx });
     expect(inside.length).toBe(1);
 
     await tx.rollback();
 
-    // Check outside tx - should NOT find it
-    const outside = await TestModel.findAll({ where: { id: 1 } });
+    const outside = await TestModel.findAll({ where: { id } });
     expect(outside.length).toBe(0);
+
+    await sequelize.query(`DROP TABLE ${tableName}`);
   });
 
   test('INSERT/COMMIT should persist', async () => {
-    const tx = new Transaction(sequelize.connectionManager);
-    await tx.start();
+    const tableName = genTableName();
+    await sequelize.query(`CREATE TABLE ${tableName} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
 
-    await TestModel.create({ id: 2, name: 'CommitTest' }, { transaction: tx });
+    const TestModel = sequelize.define('TestModel', {
+      id: DataTypes.INTEGER,
+      name: DataTypes.STRING(50)
+    }, { tableName });
 
-    const inside = await TestModel.findAll({ where: { id: 2 }, transaction: tx });
+    const tx = await Transaction.start(sequelize);
+    const id = genId();
+
+    await TestModel.create({ id, name: 'CommitTest' }, { transaction: tx });
+
+    const inside = await TestModel.findAll({ where: { id }, transaction: tx });
     expect(inside.length).toBe(1);
 
     await tx.commit();
 
-    // Check outside tx - SHOULD find it
-    const outside = await TestModel.findAll({ where: { id: 2 } });
+    const outside = await TestModel.findAll({ where: { id } });
     expect(outside.length).toBe(1);
+
+    await sequelize.query(`DROP TABLE ${tableName}`);
   });
 
   test('SELECT inside transaction should see own changes', async () => {
-    const tx = new Transaction(sequelize.connectionManager);
-    await tx.start();
+    const tableName = genTableName();
+    await sequelize.query(`CREATE TABLE ${tableName} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
 
-    // Insert
-    await TestModel.create({ id: 3, name: 'SelectTest' }, { transaction: tx });
+    const TestModel = sequelize.define('TestModel', {
+      id: DataTypes.INTEGER,
+      name: DataTypes.STRING(50)
+    }, { tableName });
 
-    // Update
-    const instance = await TestModel.findOne({ where: { id: 3 }, transaction: tx });
+    const tx = await Transaction.start(sequelize);
+    const id = genId();
+
+    await TestModel.create({ id, name: 'SelectTest' }, { transaction: tx });
+
+    const instance = await TestModel.findOne({ where: { id }, transaction: tx });
     instance.name = 'Updated';
     await instance.save({ transaction: tx });
 
-    // Check inside tx
-    const inside = await TestModel.findAll({ where: { id: 3 }, transaction: tx });
+    const inside = await TestModel.findAll({ where: { id }, transaction: tx });
     expect(inside.length).toBe(1);
     expect(inside[0].name).toBe('Updated');
 
     await tx.rollback();
 
-    // Outside should NOT find it
-    const outside = await TestModel.findAll({ where: { id: 3 } });
+    const outside = await TestModel.findAll({ where: { id } });
     expect(outside.length).toBe(0);
+
+    await sequelize.query(`DROP TABLE ${tableName}`);
   });
 
   test('Multiple operations in transaction then rollback', async () => {
-    const tx = new Transaction(sequelize.connectionManager);
-    await tx.start();
+    const tableName = genTableName();
+    await sequelize.query(`CREATE TABLE ${tableName} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
 
-    await TestModel.create({ id: 4, name: 'Multi1' }, { transaction: tx });
-    await TestModel.create({ id: 5, name: 'Multi2' }, { transaction: tx });
-    await TestModel.create({ id: 6, name: 'Multi3' }, { transaction: tx });
+    const TestModel = sequelize.define('TestModel', {
+      id: DataTypes.INTEGER,
+      name: DataTypes.STRING(50)
+    }, { tableName });
+
+    const tx = await Transaction.start(sequelize);
+    const ids = [genId(), genId(), genId()];
+
+    await TestModel.create({ id: ids[0], name: 'Multi1' }, { transaction: tx });
+    await TestModel.create({ id: ids[1], name: 'Multi2' }, { transaction: tx });
+    await TestModel.create({ id: ids[2], name: 'Multi3' }, { transaction: tx });
 
     const inside = await TestModel.findAll({ transaction: tx });
     expect(inside.length).toBe(3);
@@ -108,26 +128,37 @@ describe('Integration - Transaction Isolation', () => {
     await tx.rollback();
 
     const outside = await TestModel.findAll();
-    expect(outside.length).toBe(0); // previous committed tests only
+    const found = outside.filter(r => ids.includes(r.id));
+    expect(found.length).toBe(0);
+
+    await sequelize.query(`DROP TABLE ${tableName}`);
   });
 
   test('Rollback on error should work', async () => {
-    const tx = new Transaction(sequelize.connectionManager);
-    await tx.start();
+    const tableName = genTableName();
+    await sequelize.query(`CREATE TABLE ${tableName} (id INTEGER PRIMARY KEY, name VARCHAR(50))`);
 
-    await TestModel.create({ id: 7, name: 'ErrorTest' }, { transaction: tx });
+    const TestModel = sequelize.define('TestModel', {
+      id: DataTypes.INTEGER,
+      name: DataTypes.STRING(50)
+    }, { tableName });
 
-    // Try to insert duplicate - should fail
+    const tx = await Transaction.start(sequelize);
+    const id = genId();
+
+    await TestModel.create({ id, name: 'ErrorTest' }, { transaction: tx });
+
     try {
-      await TestModel.create({ id: 7, name: 'ErrorTest2' }, { transaction: tx });
+      await TestModel.create({ id, name: 'ErrorTest2' }, { transaction: tx });
     } catch (e) {
       // Expected to fail
     }
 
     await tx.rollback();
 
-    // Nothing should have persisted
-    const outside = await TestModel.findAll({ where: { id: 7 } });
+    const outside = await TestModel.findAll({ where: { id } });
     expect(outside.length).toBe(0);
+
+    await sequelize.query(`DROP TABLE ${tableName}`);
   });
 });

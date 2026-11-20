@@ -13,6 +13,9 @@ import { BelongsToMany } from './associations/belongs-to-many.js';
  * @returns {typeof Model} - Clase del modelo creado
  */
 export function defineModel(sequelize, name, attributes, options = {}) {
+  // Detectar la clave primaria
+  const primaryKeyAttribute = Object.keys(attributes).find(key => attributes[key].primaryKey) || 'id';
+
   class ModelInstance extends Model {
     static get tableName() {
       return options.tableName || name.toLowerCase() + 's';
@@ -24,6 +27,10 @@ export function defineModel(sequelize, name, attributes, options = {}) {
 
     static get hooks() {
       return options.hooks || {};
+    }
+
+    static get primaryKeyAttribute() {
+      return primaryKeyAttribute;
     }
 
     // Inyectamos la instancia de sequelize al modelo

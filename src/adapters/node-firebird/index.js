@@ -38,8 +38,11 @@ export class NodeFirebirdAdapter extends IDriverAdapter {
       if (isPool) {
         connection.get((err, db) => {
           if (err) return reject(err);
+          // Cambiar a manejo explícito de parámetros si necesario,
+          // pero node-firebird normalmente maneja el array de params.
+          // El error 804 sugiere un problema de tipos.
           db.query(sql, params, (err, result) => {
-            db.detach(); // Devolver al pool
+            db.detach();
             if (err) return reject(err);
             resolve(result);
           });

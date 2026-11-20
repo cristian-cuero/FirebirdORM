@@ -189,12 +189,12 @@ export class Model {
 
       if (pkValue !== undefined && pkValue !== null) {
         // UPDATE
-        const { sql, params } = this.sequelize.dialect.queryGenerator.updateQuery(this.constructor, this.dataValues, { where: { [primaryKey]: pkValue } });
-        await this.sequelize.query(sql, params, options);
+        const { sql, params } = this.constructor.sequelize.dialect.queryGenerator.updateQuery(this.constructor, this.dataValues, { where: { [primaryKey]: pkValue } });
+        await this.constructor.sequelize.query(sql, params, options);
       } else {
         // INSERT
-        const { sql, params } = this.sequelize.dialect.queryGenerator.insertQuery(this.constructor, this.dataValues);
-        await this.sequelize.query(sql, params, options);
+        const { sql, params } = this.constructor.sequelize.dialect.queryGenerator.insertQuery(this.constructor, this.dataValues);
+        await this.constructor.sequelize.query(sql, params, options);
       }
 
       await this.constructor.triggerHook('afterSave', this, options);

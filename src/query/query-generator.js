@@ -71,8 +71,20 @@ export class QueryGenerator {
     // 5. LIMIT/OFFSET (paginación)
     const pagination = this._buildPagination(options.limit, options.offset);
 
-    // 6. Construcción final - FIRST/SKIP va después de SELECT
-    let sql = `SELECT ${pagination.sql ? pagination.sql + ' ' : ''}${columns.join(', ')} FROM ${model.tableName}${joins}${whereClause}${orderClause}`;
+    // 6. Construcción final
+    // Para FIRST/SKIP/ROWS en Firebird, debe ir justo después de SELECT
+    let sql = `SELECT ${pagination.sql ? pagination.sql.trimStart() + ' ' : ''}${columns.join(', ')} FROM ${model.tableName}${joins}${whereClause}${orderClause}`;
+
+    // Si paginación es ROWS ... TO (FB 2.5), ya incluye el nombre de tabla en la estructura si no se usa FIRST/SKIP
+    // Pero la estructura actual asume que pagination.sql es FIRST n o SKIP n
+    // Corregir para ROWS ? TO ?
+    if (pagination.sql.includes('ROWS')) {
+       // La estructura actual de _buildPagination devuelve:
+       // " ROWS ? TO ?"
+       // Esto se concatena mal en la query: SELECT  ROWS ? TO ? col1, col2 FROM table
+       // El SQL correcto debería ser: SELECT col1, col2 FROM table ROWS ? TO ?
+       sql = `SELECT ${columns.join(', ')} FROM ${model.tableName}${joins}${whereClause}${orderClause}${pagination.sql}`;
+    }
 
     return { sql, params: [...pagination.params, ...where.params] };
   }
